@@ -18,7 +18,6 @@ jobs:
   create-release-tag:
     uses: ./.github/workflows/create-release-tag.yml
     needs: test
-    runs-on: ubuntu-latest
     # Only run when a PR is merged to main branch
     if: |
       github.event_name == 'pull_request' &&
