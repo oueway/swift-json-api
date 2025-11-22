@@ -11,6 +11,9 @@ on:
         type: string
         default: 'latest'
 
+permissions:
+  contents: write      # push tag、release
+
 jobs:
   create-release-tag:
     name: Create Release Tag

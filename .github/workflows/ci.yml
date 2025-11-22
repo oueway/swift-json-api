@@ -11,19 +11,30 @@ on:
     branches:
       - main
 
+# permissions:
+#   contents: write      # push tag、release
+#   packages: write      # package 
+#   pull-requests: write  # approve PR
+
 jobs:
   test:
     uses: ./.github/workflows/test.yml
   
   create-release-tag:
-    uses: ./.github/workflows/create-release-tag.yml
+    name: Bump version and push tag
+    uses: anothrNick/github-tag-action@v1
     needs: test
-    # Only run when a PR is merged to main branch
-    if: |
-      github.event_name == 'pull_request' &&
-      github.event.action == 'closed' &&
-      github.event.pull_request.merged == true &&
-      github.event.pull_request.base.ref == 'main'
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    with:
+      default_bump: patch
+      release_branches: main
+    # # Only run when a PR is merged to main branch
+    # if: |
+    #   github.event_name == 'pull_request' &&
+    #   github.event.action == 'closed' &&
+    #   github.event.pull_request.merged == true &&
+    #   github.event.pull_request.base.ref == 'main'
     
     # steps:
     #   - name: Checkout code
