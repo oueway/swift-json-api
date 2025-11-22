@@ -1,0 +1,30 @@
+name: Test
+
+# Reusable workflow for running unit tests
+on:
+  workflow_call:
+    inputs:
+      swift-version:
+        description: 'Swift version to use'
+        required: false
+        type: string
+        default: 'latest'
+
+jobs:
+  test:
+    name: Run Unit Tests
+    runs-on: macos-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Show Swift version
+        run: swift --version
+      
+      - name: Build package
+        run: swift build
+      
+      - name: Run tests
+        run: swift test
+

@@ -1,0 +1,48 @@
+name: CI
+
+# This workflow runs unit tests on every push to main branch and on pull requests
+# After successful tests, it creates a new release tag only when a PR is merged to main
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+    branches:
+      - main
+
+# permissions:
+#   contents: write      # push tag、release
+#   packages: write      # package 
+#   pull-requests: write  # approve PR
+
+jobs:
+  test:
+    uses: ./.github/workflows/test.yml
+  
+  create-release-tag:
+    name: Bump version and push tag
+    needs: test
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'pull_request' &&
+      github.event.action == 'closed' &&
+      github.event.pull_request.merged == true &&
+      github.event.pull_request.base.ref == 'main'
+    permissions:
+      contents: write        # push tag、release
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for tags
+
+      - name: Bump version and push tag
+        uses: anothrNick/github-tag-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DEFAULT_BUMP: patch
+          RELEASE_BRANCHES: main
+          INITIAL_VERSION: 0.0.1
+          TAG_PREFIX: v
+  
