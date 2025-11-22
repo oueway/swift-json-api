@@ -22,13 +22,23 @@ jobs:
   
   create-release-tag:
     name: Bump version and push tag
-    uses: anothrNick/github-tag-action@v1
-    needs: test
-    env:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    with:
-      default_bump: patch
-      release_branches: main
+    needs: test            
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write        # push tag、release
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for tags
+
+      - name: Bump version and push tag
+        uses: anothrNick/github-tag-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          default_bump: patch     
+          release_branches: main 
+ 
     # # Only run when a PR is merged to main branch
     # if: |
     #   github.event_name == 'pull_request' &&
