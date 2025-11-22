@@ -22,10 +22,16 @@ jobs:
   
   create-release-tag:
     name: Bump version and push tag
-    needs: test            
+    needs: test
     runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'pull_request' &&
+      github.event.action == 'closed' &&
+      github.event.pull_request.merged == true &&
+      github.event.pull_request.base.ref == 'main'
     permissions:
       contents: write        # push tag、release
+
     steps:
       - uses: actions/checkout@v4
         with:
@@ -35,8 +41,8 @@ jobs:
         uses: anothrNick/github-tag-action@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          DEFAULT_BUMP: patch      
-          RELEASE_BRANCHES: main   
-          INITIAL_VERSION: 0.0.1   
-          TAG_PREFIX: v           
+          DEFAULT_BUMP: patch
+          RELEASE_BRANCHES: main
+          INITIAL_VERSION: 0.0.1
+          TAG_PREFIX: v
   
