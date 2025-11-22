@@ -1,0 +1,84 @@
+  
+name: Create Release Tag
+
+# Reusable workflow for running unit tests
+on:
+  workflow_call:
+    inputs:
+      swift-version:
+        description: 'Swift version to use'
+        required: false
+        type: string
+        default: 'latest'
+
+jobs:
+  create-release-tag:
+    name: Create Release Tag
+    runs-on: macos-latest
+    # needs: test
+    # # Only run when a PR is merged to main branch
+    # if: |
+    #   github.event_name == 'pull_request' &&
+    #   github.event.action == 'closed' &&
+    #   github.event.pull_request.merged == true &&
+    #   github.event.pull_request.base.ref == 'main'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for tags
+          token: ${{ secrets.GITHUB_TOKEN }}
+          ref: ${{ github.event.pull_request.merge_commit_sha || github.ref }}
+      
+      - name: Make scripts executable
+        run: |
+          chmod +x .github/scripts/*.sh
+      
+      - name: Get latest tag
+        id: get_tag
+        run: |
+          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          echo "latest_tag=$LATEST_TAG" >> $GITHUB_OUTPUT
+          echo "Latest tag: $LATEST_TAG"
+      
+      - name: Generate new version tag
+        id: new_tag
+        run: |
+          LATEST_TAG="${{ steps.get_tag.outputs.latest_tag }}"
+          NEW_TAG=$(.github/scripts/generate-next-version.sh "$LATEST_TAG")
+          echo "new_tag=$NEW_TAG" >> $GITHUB_OUTPUT
+          echo "New tag: $NEW_TAG"
+      
+      - name: Check if tag exists
+        id: check_tag
+        run: |
+          NEW_TAG="${{ steps.new_tag.outputs.new_tag }}"
+          .github/scripts/check-tag-exists.sh "$NEW_TAG"
+        continue-on-error: true
+      
+      - name: Create and push tag
+        if: steps.check_tag.outputs.tag_exists == 'false'
+        run: |
+          NEW_TAG="${{ steps.new_tag.outputs.new_tag }}"
+          .github/scripts/create-tag.sh "$NEW_TAG"
+      
+      - name: Create GitHub Release
+        if: steps.check_tag.outputs.tag_exists == 'false'
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.new_tag.outputs.new_tag }}
+          name: Release ${{ steps.new_tag.outputs.new_tag }}
+          body: |
+            🚀 Automated release after successful unit tests.
+            
+            **PR:** #${{ github.event.pull_request.number }}
+            **Merged by:** ${{ github.event.pull_request.merged_by.login }}
+            **Merge Commit:** ${{ github.event.pull_request.merge_commit_sha }}
+            **PR Title:** ${{ github.event.pull_request.title }}
+            
+            All tests passed successfully! ✅
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
