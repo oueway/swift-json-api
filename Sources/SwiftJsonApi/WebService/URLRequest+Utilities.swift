@@ -68,7 +68,7 @@ private struct EncodableConverter: Encodable {
 
 // MARK: - URLRequest Helpers
 
-public extension URLRequest {
+extension URLRequest {
     // TODO: public as supported Types
     enum ContentType: String {
         case formUrlEncoded = "application/x-www-form-urlencoded"
@@ -101,8 +101,6 @@ public extension URLRequest {
         // TODO: override with custom headers
     }
 
-    // MARK: Public
-
     static func get(from url: URL) -> URLRequest {
         var request = URLRequest(wsUrl: url)
         request.httpMethod = "GET"
@@ -131,9 +129,7 @@ public extension URLRequest {
         return request
     }
 
-    // MARK: Internal
-
-    internal func debugLog() {
+    func debugLog() {
         MyLogger.jsonApi?.debugAsync {
             var messages = [String]()
             if let httpMethod { messages.append(httpMethod) }

@@ -10,6 +10,11 @@ import Foundation
 
 // MARK: - JADatumProtocol Type
 
+/// Protocol representing a JSON:API resource (datum) with typed
+/// attributes and relationships.
+///
+/// Conforming types should provide a designated initializer that can be
+/// used by dynamic decoders and helper APIs.
 public protocol JADatumProtocol: JAAnyDatum, JADatumProperties {
     /// Designated initializer for JSON:API datum types.
     init(id: String, links: JASelfLinks, attributes: Attributes, relationships: Relationships?)

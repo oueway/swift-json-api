@@ -9,6 +9,8 @@
 
 // MARK: - JADatumPlaceHolder Type
 
+/// A generic placeholder datum used when a concrete resource type is not
+/// available. Useful for decoding unknown included items or during tests.
 public struct JADatumPlaceHolder: JADatumProtocol {
     public static let typeName: String = "placeholder"
 

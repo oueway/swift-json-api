@@ -7,16 +7,25 @@
 
 import Foundation
 
+/// Wrapper for the top-level JSON:API response envelope containing
+/// the primary `data`, optional `included` resources, pagination `links`
+/// and `meta` information.
 public struct JAResponse<Datum>: Codable where Datum: JADatumProtocol {
+    /// The primary data payload (single or multiple resources).
     public let data: JADataOrDatas<Datum>
+
+    /// Optional included resources referenced by the primary data.
     public let included: [JADynamicDatum]?
     public let links: Links?
     public let meta: Meta?
 
     // MARK: - ApolloResponseLinks
 
+    /// Pagination and relationship links returned by the API.
     public struct Links: Codable {
         public let linksSelf, related: String?
+
+        /// First/last/next/prev page links for paginated responses.
         public let first, last, next, prev: String?
 
         enum CodingKeys: String, CodingKey {
@@ -27,6 +36,7 @@ public struct JAResponse<Datum>: Codable where Datum: JADatumProtocol {
 
         // MARK: -  Creation
 
+        /// An empty `Links` instance where every property is `nil`.
         public static var empty: Self {
             Links(linksSelf: nil, related: nil, first: nil, last: nil, next: nil, prev: nil)
         }
@@ -43,16 +53,20 @@ public struct JAResponse<Datum>: Codable where Datum: JADatumProtocol {
 
     // MARK: - Meta
 
+    /// Metadata returned by the API, such as total resource count.
     public struct Meta: Codable {
+        /// Total number of resources available on the server.
         public let totalResourceCount: Int
     }
 
     // MARK: -  Computed Properties
 
+    /// Convenience accessor returning the primary data as an array of `Datum`.
     public var datums: [Datum] { data.array }
 
     // MARK: - Creation
 
+    /// An empty response instance with no data or metadata.
     public static var empty: Self {
         JAResponse(data: [], included: nil, links: .empty, meta: nil)
     }
