@@ -14,13 +14,13 @@ final class WebServiceTests: XCTestCase {
     override func setUp() {
         super.setUp()
         mockDelegate = MockWebServiceDelegate()
-        // 清理之前的 shared 实例（通过反射或直接设置）
+        // Clean up the previous shared instance (via reflection or by setting directly)
         WebService.configure(delegate: mockDelegate, force: true)
     }
     
     override func tearDown() {
         super.tearDown()
-        // 清理测试状态
+        // Clean up test state
         if let shared = WebService.shared {
             Task {
                 await shared.cleanAllRequests()
@@ -46,8 +46,8 @@ final class WebServiceTests: XCTestCase {
         WebService.configure(delegate: secondDelegate, force: false)
         
         XCTAssertNotNil(WebService.shared)
-        // 应该保持第一个 delegate（因为没有 force）
-        // 注意：由于 force 默认是 false，第二次调用不会改变
+        // Should keep the first delegate (because force is false)
+        // Note: Since force defaults to false, the second call will not change it
         XCTAssertEqual(WebService.shared?.delegate.apiEndpoint, firstDelegate.apiEndpoint)
     }
     
@@ -72,7 +72,7 @@ final class WebServiceTests: XCTestCase {
         
         await webService.cleanAllRequests()
         
-        // 如果 cleanAllRequests 正常工作，应该不会有错误
+        // If cleanAllRequests works correctly, there should be no errors
         XCTAssertTrue(true)
     }
     
