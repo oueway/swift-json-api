@@ -4,11 +4,10 @@
 //  Created by Oueway Forest on 11/25/25.
 //
 
-import XCTest
 @testable import SwiftJsonApi
+import XCTest
 
 final class JAResponseTests: XCTestCase {
-    
     // MARK: - Initialization Tests
     
     func testEmptyResponse() {
@@ -99,12 +98,8 @@ final class JAResponseTests: XCTestCase {
             links: links,
             meta: nil
         )
-        
-        let nextPageRequest = response.nextPageRequest
-        
-        XCTAssertNotNil(nextPageRequest)
-        XCTAssertEqual(nextPageRequest?.url?.absoluteString, "https://api.example.com/mock?page=2")
-        XCTAssertEqual(nextPageRequest?.httpMethod, "GET")
+    
+        XCTAssertTrue(response.hasNextPage)
     }
     
     func testNextPageRequestWithNilNext() {
@@ -115,10 +110,8 @@ final class JAResponseTests: XCTestCase {
             links: links,
             meta: nil
         )
-        
-        let nextPageRequest = response.nextPageRequest
-        
-        XCTAssertNil(nextPageRequest)
+                
+        XCTAssertFalse(response.hasNextPage)
     }
     
     func testNextPageRequestWithInvalidURL() {
@@ -136,10 +129,8 @@ final class JAResponseTests: XCTestCase {
             links: links,
             meta: nil
         )
-        
-        let nextPageRequest = response.nextPageRequest
-        
-        XCTAssertNil(nextPageRequest)
+                
+        XCTAssertFalse(response.hasNextPage)
     }
     
     // MARK: - Appending Tests
@@ -323,4 +314,3 @@ final class JAResponseTests: XCTestCase {
         XCTAssertNil(mappedIncludes)
     }
 }
-

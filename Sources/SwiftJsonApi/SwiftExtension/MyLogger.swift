@@ -7,7 +7,9 @@
 
 import Foundation
 import OSLog
+#if canImport(WebKit)
 import WebKit
+#endif
 
 // MARK: - MyLogger
 
@@ -21,7 +23,7 @@ public class MyLogger {
     #else
     fileprivate static let logWriter = DataWriter(
         url: FilesStore.documentURL(
-            forFile: "log-\(Date().formatted(withFormat:"yyyy-MM-dd")).log"
+            forFile: "log-\(Date().formatted(withFormat: "yyyy-MM-dd")).log"
         )
     )
     fileprivate let moduleName: String
@@ -169,8 +171,7 @@ private class AllLogger: DefaultLogger {
 // MARK: - Get Log File
 
 public extension MyLogger {
-    // MARK: Internal
-
+    #if canImport(WebKit)
     func generateDisplayView() -> WKWebView {
         let webView = WKWebView()
 
@@ -180,6 +181,7 @@ public extension MyLogger {
 
         return webView
     }
+    #endif
 
     #if USE_OSLOG
     @available(iOS 15.0, *)

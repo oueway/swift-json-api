@@ -84,9 +84,9 @@ public struct JAResponse<Datum>: Codable where Datum: JADatumProtocol {
 extension JAResponse {
     func resolvedRelationshipsFromIncluded() -> Self {
         JAResponse(data: datumsWithResolvedRelationshipsFromIncluded(),
-                        included: nil,
-                        links: links,
-                        meta: meta)
+                   included: nil,
+                   links: links,
+                   meta: meta)
     }
 
     func datumsWithResolvedRelationshipsFromIncluded() -> [Datum] {
@@ -111,14 +111,27 @@ extension JAResponse {
 // MARK: - Handle Pages
 
 public extension JAResponse {
-    var nextPageRequest: URLRequest? {
-        // TODO: verify
-//        // Decode the string to prevent double-encoding issues
-//        guard let nextLink = links?.next?.removingPercentEncoding,
-//              let nextURL = URL(string: nextLink)
-//        else {
-//            return nil
-//        }
+    var hasNextPage: Bool {
+        guard let nextLink = links?.next else { return false }
+        let url = URL(string: nextLink)
+        return url?.scheme != nil && url?.host != nil
+    }
+
+    func nextPage() async throws -> JAResponse<Datum>? {
+        guard let nextPageRequest else { return nil }
+        guard let taskManager = WebService.shared else {
+            throw MyError.local("WebService is not set")
+        }
+
+        return try await taskManager.decodableTask(with: nextPageRequest)
+    }
+
+    mutating func updateWithNextPage() async throws {
+        guard let nextPageResponse = try await nextPage() else { return }
+        self = appending(nextPageResponse)
+    }
+
+    private var nextPageRequest: URLRequest? {
         guard let nextLink = links?.next else { return nil }
 
         let nextUrl: URL?
@@ -129,10 +142,11 @@ public extension JAResponse {
         }
 
         guard let nextUrl = nextUrl else { return nil }
-        
+
         // Verify that the URL is a valid absolute URL (must contain scheme and host)
         guard nextUrl.scheme != nil,
-              nextUrl.host != nil else {
+              nextUrl.host != nil
+        else {
             return nil
         }
 

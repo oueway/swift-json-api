@@ -92,7 +92,11 @@ final class ISO8601Tests: XCTestCase {
         XCTAssertNotNil(decoded.date)
         // 日期应该被正确解析（只包含日期部分）
         var calendar = Calendar.current
-        calendar.timeZone = .gmt
+        if #available(iOS 16, tvOS 16, macOS 13, watchOS 9, *) {
+            calendar.timeZone = .gmt
+        } else {
+            // Fallback on earlier versions
+        }
         let components = calendar.dateComponents([.year, .month, .day], from: decoded.date)
         
         XCTAssertEqual(components.year, 2021)

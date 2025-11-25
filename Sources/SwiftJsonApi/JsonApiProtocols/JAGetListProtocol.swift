@@ -17,24 +17,24 @@ import SwiftUI
 /// provide typed sorting and filtering helpers for requests.
 public protocol JAGetListProtocol: JAResourceProtocol {
     /// The type used to represent sortable fields for collection requests.
-    associatedtype SortItem: SortItemProtocol
+    associatedtype SortItem: JASortItemProtocol
 
     /// The type used to represent filter items for collection requests.
     associatedtype FilterItem: JAFilterItemProtocol
 }
 
-// MARK: - SortItemProtocol Type
+// MARK: - JASortItemProtocol Type
 
 /// Represents a sortable field. Conformers are typically simple enums.
-public protocol SortItemProtocol: StringRawRepresentable {
+public protocol JASortItemProtocol: StringRawRepresentable {
     /// Construct a sort item from string value.
     init(_ value: String)
 }
 
-public extension SortItemProtocol {
-    var ascending: Self { self }
+public extension JASortItemProtocol {
+    var asc: Self { self }
 
-    var descending: Self { Self("-\(rawValue)") }
+    var desc: Self { Self("-\(rawValue)") }
 
     init?(rawValue: RawValue) {
         self.init(rawValue)
@@ -53,13 +53,13 @@ extension Array where Element: StringRawRepresentable {
     }
 }
 
-// MARK: - EmptySortItem Type
+// MARK: - JAEmptySortItem Type
 
 /// A trivial `SortItem` implementation for cases where no concrete enum is used.
-public struct EmptySortItem: SortItemProtocol {
+public struct JAEmptySortItem: JASortItemProtocol {
     public let rawValue: String
 
-    /// Create an `EmptySortItem` from an arbitrary string.
+    /// Create an `JAEmptySortItem` from an arbitrary string.
     /// - Parameter value: The raw string value to use for sorting.
     public init(_ value: String) {
         rawValue = value

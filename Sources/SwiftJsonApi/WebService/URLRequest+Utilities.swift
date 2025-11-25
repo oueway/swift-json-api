@@ -76,7 +76,7 @@ extension URLRequest {
         case jsonAPI = "application/vnd.api+json"
     }
 
-    internal var uniqueID: String {
+    var uniqueID: String {
         let urlString = url?.absoluteString ?? ""
 
         guard let data = httpBody else {
@@ -155,8 +155,20 @@ extension URL {
             URL(string: "https://Config-Public-API-Endpoint-URL-Goes-Here.com")!
 
         var url = URL(string: path, relativeTo: endpoint) ?? URL(string: "https://Error-Creating-URL.com")!
-        if let queryItems {
-            url.append(queryItems: queryItems) // TODO: check: urlQuery.percentEncodedQuery
+        if let queryItems = queryItems {
+            if #available(iOS 16.0, macOS 13.0, tvOS 16.0, watchOS 9.0, *) {
+                url.append(queryItems: queryItems)
+            } else {
+                // Fallback for iOS < 16 or macOS < 13: build query via URLComponents
+                if var components = URLComponents(url: url, resolvingAgainstBaseURL: true) {
+                    var existing = components.queryItems ?? []
+                    existing.append(contentsOf: queryItems)
+                    components.queryItems = existing
+                    if let newURL = components.url {
+                        url = newURL
+                    }
+                }
+            }
         }
 
         return url
