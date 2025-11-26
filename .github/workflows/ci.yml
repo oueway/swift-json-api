@@ -24,11 +24,7 @@ jobs:
     name: Bump version and push tag
     needs: test
     runs-on: ubuntu-latest
-    if: |
-      github.event_name == 'pull_request' &&
-      github.event.action == 'closed' &&
-      github.event.pull_request.merged == true &&
-      github.event.pull_request.base.ref == 'main'
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     permissions:
       contents: write        # push tag、release
 
@@ -43,6 +39,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DEFAULT_BUMP: patch
           RELEASE_BRANCHES: main
-          INITIAL_VERSION: 0.0.1
+          INITIAL_VERSION: 0.0.0
           TAG_PREFIX: v
   

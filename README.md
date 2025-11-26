@@ -35,14 +35,11 @@ let tasks = try await TaskDto.list(
 let task = try await TaskDto.get(byID: "123").datums.first
 // _ = try await TaskDto.get(byID: "123", include: [.assignee])
 ```
-
+[View Full Examples](README_EXAMPLES.md)
 
 ## Requirements
 
-- Swift 5.12+
-- iOS 13.0+ / macOS 10.0+
-
-See `Package.swift` for platform details.
+- iOS 14.0+ / macOS 10.16+ / tvOS 14.0+ / visionOS 2.0+
 
 ## Installation
 

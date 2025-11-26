@@ -5,7 +5,7 @@ import PackageDescription
 
 let package = Package(
     name: "SwiftJsonApi",
-    platforms: [.iOS("14"), .macOS("10.16"), .tvOS("14.0"), .watchOS("6.0"), .visionOS("2.0")],
+    platforms: [.iOS("14.0"), .macOS("10.16"), .tvOS("14.0"), .visionOS("2.0")],
     products: [
         // Products define the executables and libraries a package produces, making them visible to other packages.
         .library(
