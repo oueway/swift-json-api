@@ -8,6 +8,7 @@
 import Foundation
 
 
+/// Simple wrapper for the JSON:API `self` link on a resource.
 public struct JASelfLinks: Codable {
     public let linksSelf: String
 
@@ -15,7 +16,6 @@ public struct JASelfLinks: Codable {
         case linksSelf = "self"
     }
 
-    // - creation
 
     public init(linksSelf: String) {
         self.linksSelf = linksSelf

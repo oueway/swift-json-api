@@ -7,16 +7,25 @@
 
 import Foundation
 
+/// Wrapper for the top-level JSON:API response envelope containing
+/// the primary `data`, optional `included` resources, pagination `links`
+/// and `meta` information.
 public struct JAResponse<Datum>: Codable where Datum: JADatumProtocol {
+    /// The primary data payload (single or multiple resources).
     public let data: JADataOrDatas<Datum>
+
+    /// Optional included resources referenced by the primary data.
     public let included: [JADynamicDatum]?
     public let links: Links?
     public let meta: Meta?
 
     // MARK: - ApolloResponseLinks
 
+    /// Pagination and relationship links returned by the API.
     public struct Links: Codable {
         public let linksSelf, related: String?
+
+        /// First/last/next/prev page links for paginated responses.
         public let first, last, next, prev: String?
 
         enum CodingKeys: String, CodingKey {
@@ -27,6 +36,7 @@ public struct JAResponse<Datum>: Codable where Datum: JADatumProtocol {
 
         // MARK: -  Creation
 
+        /// An empty `Links` instance where every property is `nil`.
         public static var empty: Self {
             Links(linksSelf: nil, related: nil, first: nil, last: nil, next: nil, prev: nil)
         }
@@ -43,16 +53,20 @@ public struct JAResponse<Datum>: Codable where Datum: JADatumProtocol {
 
     // MARK: - Meta
 
+    /// Metadata returned by the API, such as total resource count.
     public struct Meta: Codable {
+        /// Total number of resources available on the server.
         public let totalResourceCount: Int
     }
 
     // MARK: -  Computed Properties
 
+    /// Convenience accessor returning the primary data as an array of `Datum`.
     public var datums: [Datum] { data.array }
 
     // MARK: - Creation
 
+    /// An empty response instance with no data or metadata.
     public static var empty: Self {
         JAResponse(data: [], included: nil, links: .empty, meta: nil)
     }
@@ -70,9 +84,9 @@ public struct JAResponse<Datum>: Codable where Datum: JADatumProtocol {
 extension JAResponse {
     func resolvedRelationshipsFromIncluded() -> Self {
         JAResponse(data: datumsWithResolvedRelationshipsFromIncluded(),
-                        included: nil,
-                        links: links,
-                        meta: meta)
+                   included: nil,
+                   links: links,
+                   meta: meta)
     }
 
     func datumsWithResolvedRelationshipsFromIncluded() -> [Datum] {
@@ -97,14 +111,27 @@ extension JAResponse {
 // MARK: - Handle Pages
 
 public extension JAResponse {
-    var nextPageRequest: URLRequest? {
-        // TODO: verify
-//        // Decode the string to prevent double-encoding issues
-//        guard let nextLink = links?.next?.removingPercentEncoding,
-//              let nextURL = URL(string: nextLink)
-//        else {
-//            return nil
-//        }
+    var hasNextPage: Bool {
+        guard let nextLink = links?.next else { return false }
+        let url = URL(string: nextLink)
+        return url?.scheme != nil && url?.host != nil
+    }
+
+    func nextPage() async throws -> JAResponse<Datum>? {
+        guard let nextPageRequest else { return nil }
+        guard let taskManager = WebService.shared else {
+            throw MyError.local("WebService is not set")
+        }
+
+        return try await taskManager.decodableTask(with: nextPageRequest)
+    }
+
+    mutating func updateWithNextPage() async throws {
+        guard let nextPageResponse = try await nextPage() else { return }
+        self = appending(nextPageResponse)
+    }
+
+    private var nextPageRequest: URLRequest? {
         guard let nextLink = links?.next else { return nil }
 
         let nextUrl: URL?
@@ -115,10 +142,11 @@ public extension JAResponse {
         }
 
         guard let nextUrl = nextUrl else { return nil }
-        
+
         // Verify that the URL is a valid absolute URL (must contain scheme and host)
         guard nextUrl.scheme != nil,
-              nextUrl.host != nil else {
+              nextUrl.host != nil
+        else {
             return nil
         }
 

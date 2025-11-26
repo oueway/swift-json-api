@@ -10,9 +10,13 @@ import Foundation
 
 // MARK: - UnknownDatum Type
 
+/// Container used to decode heterogeneous JSON:API included resources
+/// when the concrete datum type is determined at runtime.
 public struct JADynamicDatum: Codable {
+    /// Mapping of JSON:API `type` string to the concrete `JAAnyDatum` type.
     static var allTypes: [String: JAAnyDatum.Type] = [:]
 
+    /// The decoded datum instance (type-erased to `JAAnyDatum`).
     public let datum: JAAnyDatum
 
     private enum CodingKeys: String, CodingKey {
@@ -37,7 +41,10 @@ public struct JADynamicDatum: Codable {
 }
 
 public extension JAAnyDatum {
-    static func register(as type: String) {
+    /// Register a concrete `JAAnyDatum` type for a JSON:API `type` string
+    /// so that `JADynamicDatum` can decode included resources dynamically.
+    /// - Parameter type: The `type` string as it appears in the JSON:API payload.
+    static func register(as type: String = Self.typeName) {
         JADynamicDatum.allTypes[type] = self.self
     }
 }

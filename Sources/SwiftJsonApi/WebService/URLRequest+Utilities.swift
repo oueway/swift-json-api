@@ -68,7 +68,7 @@ private struct EncodableConverter: Encodable {
 
 // MARK: - URLRequest Helpers
 
-public extension URLRequest {
+extension URLRequest {
     // TODO: public as supported Types
     enum ContentType: String {
         case formUrlEncoded = "application/x-www-form-urlencoded"
@@ -76,7 +76,7 @@ public extension URLRequest {
         case jsonAPI = "application/vnd.api+json"
     }
 
-    internal var uniqueID: String {
+    var uniqueID: String {
         let urlString = url?.absoluteString ?? ""
 
         guard let data = httpBody else {
@@ -100,8 +100,6 @@ public extension URLRequest {
         setValue("no-cache", forHTTPHeaderField: "Cache-Control")
         // TODO: override with custom headers
     }
-
-    // MARK: Public
 
     static func get(from url: URL) -> URLRequest {
         var request = URLRequest(wsUrl: url)
@@ -131,9 +129,7 @@ public extension URLRequest {
         return request
     }
 
-    // MARK: Internal
-
-    internal func debugLog() {
+    func debugLog() {
         MyLogger.jsonApi?.debugAsync {
             var messages = [String]()
             if let httpMethod { messages.append(httpMethod) }
@@ -159,8 +155,20 @@ extension URL {
             URL(string: "https://Config-Public-API-Endpoint-URL-Goes-Here.com")!
 
         var url = URL(string: path, relativeTo: endpoint) ?? URL(string: "https://Error-Creating-URL.com")!
-        if let queryItems {
-            url.append(queryItems: queryItems) // TODO: check: urlQuery.percentEncodedQuery
+        if let queryItems = queryItems {
+            if #available(iOS 16.0, macOS 13.0, tvOS 16.0, watchOS 9.0, *) {
+                url.append(queryItems: queryItems)
+            } else {
+                // Fallback for iOS < 16 or macOS < 13: build query via URLComponents
+                if var components = URLComponents(url: url, resolvingAgainstBaseURL: true) {
+                    var existing = components.queryItems ?? []
+                    existing.append(contentsOf: queryItems)
+                    components.queryItems = existing
+                    if let newURL = components.url {
+                        url = newURL
+                    }
+                }
+            }
         }
 
         return url

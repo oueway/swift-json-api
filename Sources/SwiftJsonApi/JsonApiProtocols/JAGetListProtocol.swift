@@ -11,21 +11,30 @@ import SwiftUI
 
 // MARK: - JAGetListProtocol Type
 
+/// Protocol for resources that support listing (GET collection) operations.
+///
+/// Conforming types declare `SortItem` and `FilterItem` associated types to
+/// provide typed sorting and filtering helpers for requests.
 public protocol JAGetListProtocol: JAResourceProtocol {
-    associatedtype SortItem: SortItemProtocol
+    /// The type used to represent sortable fields for collection requests.
+    associatedtype SortItem: JASortItemProtocol
+
+    /// The type used to represent filter items for collection requests.
     associatedtype FilterItem: JAFilterItemProtocol
 }
 
-// MARK: - SortItemProtocol Type
+// MARK: - JASortItemProtocol Type
 
-public protocol SortItemProtocol: StringRawRepresentable {
+/// Represents a sortable field. Conformers are typically simple enums.
+public protocol JASortItemProtocol: StringRawRepresentable {
+    /// Construct a sort item from string value.
     init(_ value: String)
 }
 
-public extension SortItemProtocol {
-    var ascending: Self { self }
+public extension JASortItemProtocol {
+    var asc: Self { self }
 
-    var descending: Self { Self("-\(rawValue)") }
+    var desc: Self { Self("-\(rawValue)") }
 
     init?(rawValue: RawValue) {
         self.init(rawValue)
@@ -44,11 +53,14 @@ extension Array where Element: StringRawRepresentable {
     }
 }
 
-// MARK: - EmptySortItem Type
+// MARK: - JAEmptySortItem Type
 
-public struct EmptySortItem: SortItemProtocol {
+/// A trivial `SortItem` implementation for cases where no concrete enum is used.
+public struct JAEmptySortItem: JASortItemProtocol {
     public let rawValue: String
 
+    /// Create an `JAEmptySortItem` from an arbitrary string.
+    /// - Parameter value: The raw string value to use for sorting.
     public init(_ value: String) {
         rawValue = value
     }
@@ -57,6 +69,16 @@ public struct EmptySortItem: SortItemProtocol {
 // MARK: - Apollo + JAGetListProtocol
 
 public extension JAGetListProtocol where Self: JADatumProtocol {
+    /// Fetch a paginated list of resources from the server.
+    ///
+    /// This helper composes query items for filters, sorting and includes
+    /// and calls the shared `WebService` to perform the request.
+    /// - Parameters:
+    ///   - filterItems: Optional array of filter items to apply.
+    ///   - sortItems: Optional array of sort descriptors.
+    ///   - includeItems: Optional list of related resources to include.
+    ///   - pageSize: Page size to request (defaults to 15).
+    /// - Returns: A decoded `JAResponse` containing the requested resources.
     static func list(
         filterBy filterItems: [FilterItem]? = nil,
         sortBy sortItems: [SortItem]? = nil,

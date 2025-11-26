@@ -19,13 +19,13 @@ final class ISO8601Tests: XCTestCase {
         let json = try JSONSerialization.jsonObject(with: encoded) as! [String: String]
         
         XCTAssertNotNil(json["date"])
-        // 应该包含 "2021-01-01T00:00:00.000Z" 格式
+        // Should contain format like "2021-01-01T00:00:00.000Z"
         XCTAssertTrue(json["date"]!.contains("2021-01-01T00:00:00"))
         XCTAssertTrue(json["date"]!.hasSuffix("Z"))
     }
     
     func testEncodeDateWithMilliseconds() throws {
-        // 创建一个带毫秒的日期
+        // Create a date with milliseconds
         let date = Date(timeIntervalSince1970: 1609459200.123)
         let encoder = JSONEncoder.iso8601UTC
         
@@ -33,7 +33,7 @@ final class ISO8601Tests: XCTestCase {
         let json = try JSONSerialization.jsonObject(with: encoded) as! [String: String]
         
         XCTAssertNotNil(json["date"])
-        // 应该包含毫秒部分
+        // Should include the milliseconds part
         XCTAssertTrue(json["date"]!.contains(".123"))
     }
     
@@ -53,7 +53,7 @@ final class ISO8601Tests: XCTestCase {
         let decoded = try decoder.decode(DateContainer.self, from: jsonData)
         
         XCTAssertNotNil(decoded.date)
-        // 验证日期是否正确解析
+        // Verify the date is parsed correctly
         let timeInterval = decoded.date.timeIntervalSince1970
         XCTAssertEqual(timeInterval, 1609459200.123, accuracy: 0.001)
     }
@@ -90,9 +90,13 @@ final class ISO8601Tests: XCTestCase {
         let decoded = try decoder.decode(DateContainer.self, from: jsonData)
         
         XCTAssertNotNil(decoded.date)
-        // 日期应该被正确解析（只包含日期部分）
+        // The date should be correctly parsed (date-only)
         var calendar = Calendar.current
-        calendar.timeZone = .gmt
+        if #available(iOS 16, tvOS 16, macOS 13, watchOS 9, *) {
+            calendar.timeZone = .gmt
+        } else {
+            // Fallback on earlier versions
+        }
         let components = calendar.dateComponents([.year, .month, .day], from: decoded.date)
         
         XCTAssertEqual(components.year, 2021)
@@ -112,7 +116,7 @@ final class ISO8601Tests: XCTestCase {
         }
         
         XCTAssertThrowsError(try decoder.decode(DateContainer.self, from: jsonData)) { error in
-            // 应该抛出 MyError.app 类型的错误
+            // Should throw an error of type MyError.app
             XCTAssertTrue(error is MyError)
         }
     }
