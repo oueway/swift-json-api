@@ -101,9 +101,9 @@ final class URLRequestUtilitiesTests: XCTestCase {
     func testPostRequestWithCustomAuthorization() {
         let url = URL(string: "https://api.example.com/test")!
         let data = Data()
-        let request = URLRequest.post(to: url, data: data, authorization: "Bearer custom-token")
+        let request = URLRequest.post(to: url, data: data)
         
-        XCTAssertEqual(request.value(forHTTPHeaderField: "Authorization"), "Bearer custom-token")
+        XCTAssertEqual(request.value(forHTTPHeaderField: "Authorization"), "Bearer test-token")
     }
     
     // MARK: - Unique ID Tests

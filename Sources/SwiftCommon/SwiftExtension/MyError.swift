@@ -90,25 +90,3 @@ public protocol ErrorWithCode: LocalizedError {
 }
 
 extension NSError: @retroactive LocalizedError {}
-
-extension NSError: ErrorWithCode {
-    convenience init(httpUrlResponse: HTTPURLResponse?, message: String? = nil) {
-        self.init(
-            domain: errorDomain,
-            code: httpUrlResponse?.statusCode ?? -1,
-            userInfo: [
-                NSLocalizedDescriptionKey: (httpUrlResponse?.url?.absoluteString ?? "") + ": \(message ?? "")"
-            ]
-        )
-    }
-
-    convenience init(code: Int?, message: String? = nil) {
-        self.init(
-            domain: errorDomain,
-            code: code ?? -1,
-            userInfo: [
-                NSLocalizedDescriptionKey: message ?? ""
-            ]
-        )
-    }
-}

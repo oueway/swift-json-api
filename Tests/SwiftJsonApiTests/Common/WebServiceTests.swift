@@ -79,14 +79,9 @@ final class WebServiceTests: XCTestCase {
     // MARK: - Publish Task Tests
     
     func testPublishTaskSuccess() {
-        guard let webService = WebService.shared else {
-            XCTFail("WebService.shared should not be nil")
-            return
-        }
-        
         let expectation = XCTestExpectation(description: "Publish task completes")
         
-        let publisher = webService.publishTask {
+        let publisher = WebService.publishTask {
             return "success"
         }
         
@@ -112,16 +107,11 @@ final class WebServiceTests: XCTestCase {
     }
     
     func testPublishTaskFailure() {
-        guard let webService = WebService.shared else {
-            XCTFail("WebService.shared should not be nil")
-            return
-        }
-        
         let expectation = XCTestExpectation(description: "Publish task fails")
         
         struct TestError: Error {}
         
-        let publisher = webService.publishTask {
+        let publisher = WebService.publishTask {
             throw TestError()
         }
         

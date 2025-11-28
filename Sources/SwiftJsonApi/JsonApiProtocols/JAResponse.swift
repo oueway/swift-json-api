@@ -79,6 +79,12 @@ public struct JAResponse<Datum>: Codable where Datum: JADatumProtocol {
     }
 }
 
+extension JAResponse: SingleResponse, ListResponse {
+    public typealias Item = Datum
+    public var items: [Datum] { data.array }
+    public var item: Item? { data.array.first }
+}
+
 // MARK: - Handle Included Section
 
 extension JAResponse {
@@ -119,11 +125,11 @@ public extension JAResponse {
 
     func nextPage() async throws -> JAResponse<Datum>? {
         guard let nextPageRequest else { return nil }
-        guard let taskManager = WebService.shared else {
+        guard let webService = WebService.shared else {
             throw MyError.local("WebService is not set")
         }
 
-        return try await taskManager.decodableTask(with: nextPageRequest)
+        return try await webService.decodableTask(with: nextPageRequest)
     }
 
     mutating func updateWithNextPage() async throws {

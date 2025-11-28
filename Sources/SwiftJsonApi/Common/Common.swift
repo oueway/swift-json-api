@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import SwiftCommon
 
 /// A marker protocol for enums backed by String raw values.
 public protocol StringRawRepresentable: RawRepresentable where Self.RawValue == String {}
@@ -27,3 +28,27 @@ extension MyLogger {
     }
 }
 
+public typealias MyError = SwiftCommon.MyError
+public typealias MyLogger = SwiftCommon.MyLogger
+
+extension NSError: ErrorWithCode {
+    convenience init(httpUrlResponse: HTTPURLResponse?, message: String? = nil) {
+        self.init(
+            domain: errorDomain,
+            code: httpUrlResponse?.statusCode ?? -1,
+            userInfo: [
+                NSLocalizedDescriptionKey: (httpUrlResponse?.url?.absoluteString ?? "") + ": \(message ?? "")"
+            ]
+        )
+    }
+
+    convenience init(code: Int?, message: String? = nil) {
+        self.init(
+            domain: errorDomain,
+            code: code ?? -1,
+            userInfo: [
+                NSLocalizedDescriptionKey: message ?? ""
+            ]
+        )
+    }
+}

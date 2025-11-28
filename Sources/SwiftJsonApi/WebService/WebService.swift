@@ -9,8 +9,9 @@ import Combine
 import Foundation
 
 public class WebService {
+    // TODO: support multiple instances
     public private(set) nonisolated(unsafe) static var shared: WebService?
-    
+
     private static let configureLock = NSLock()
 
     private let runningState = TaskManagerRunningState()
@@ -50,7 +51,7 @@ public class WebService {
     public static func configure(delegate: WebServiceDelegate, force: Bool = false) {
         configureLock.lock()
         defer { configureLock.unlock() }
-        
+
         guard let shared else {
             shared = WebService(delegate: delegate)
             return
@@ -64,13 +65,14 @@ public class WebService {
         }
     }
 
+    // TODO: implement cancellation
     public func cleanAllRequests() async {
         await runningState.cleanAllRequests()
     }
 
     /** Create a WebService API request Publisher if you want to use Combine.
 
-      WebService.shared.publishTask {
+      WebService.publishTask {
           try await WebService.shared.list(type: TaskManagerLocation.self)
       }
       .sink(receiveCompletion: { result in
@@ -80,7 +82,7 @@ public class WebService {
       })
       .store(in: &cancelables)
      */
-    public func publishTask<T>(priority: TaskPriority = .userInitiated, _ action: @escaping () async throws -> T) -> AnyPublisher<T, Error> {
+    public static func publishTask<T>(priority: TaskPriority = .userInitiated, _ action: @escaping () async throws -> T) -> AnyPublisher<T, Error> {
         Deferred {
             Future { promise in
                 Task(priority: priority) {
@@ -182,11 +184,11 @@ public class WebService {
                 delegate.didReceiveForbiddenError()
             }
         }
-        
+
         do {
-            let errors = try decoder.decode(JAErrors.self, from: data)
-            MyLogger.jsonApi?.error("APIError failed \(errors)")
-            return .underlayers(errors.errors)
+            let apiError = try decoder.decode(delegate.apiErrorType, from: data)
+            MyLogger.jsonApi?.error("APIError failed \(apiError)")
+            return .underlayer(apiError)
         } catch {
             MyLogger.jsonApi?.error("Decode APIError failed \(code) \(String(data: data, encoding: .utf8) ?? "")")
             return .underlayerWithCode(NSError(code: code, message: "Unable to decode data response from server!"))
@@ -202,7 +204,7 @@ private actor TaskManagerRunningState {
     fileprivate func preStartCheck(request: URLRequest) throws {
         let key = request.uniqueID
         if inProgressRequests.index(forKey: key) != nil {
-//            MyLogger.jsonApi?.debug("Duplicate Request \(request.url!)")
+            MyLogger.jsonApi?.debug("Duplicate Request \(request.url!)")
             throw MyError.local("The same request is in progress.")
         }
 
@@ -217,4 +219,3 @@ private actor TaskManagerRunningState {
         inProgressRequests.removeAll()
     }
 }
-

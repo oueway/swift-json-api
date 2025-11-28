@@ -11,6 +11,8 @@ import SwiftUI
 
 // MARK: - JAGetListProtocol Type
 
+// TODO: conform to ListProtocol
+
 /// Protocol for resources that support listing (GET collection) operations.
 ///
 /// Conforming types declare `SortItem` and `FilterItem` associated types to
@@ -77,20 +79,27 @@ public extension JAGetListProtocol where Self: JADatumProtocol {
     ///   - filterItems: Optional array of filter items to apply.
     ///   - sortItems: Optional array of sort descriptors.
     ///   - includeItems: Optional list of related resources to include.
-    ///   - pageSize: Page size to request (defaults to 15).
+    ///   - page: Page index/offset to request (defaults to 0).
+    ///   - pageSize: Page size/limit to request (defaults to 15).
     /// - Returns: A decoded `JAResponse` containing the requested resources.
     static func list(
         filterBy filterItems: [FilterItem]? = nil,
         sortBy sortItems: [SortItem]? = nil,
         include includeItems: [IncludeItem]? = nil,
+        page: Int = 0,
         pageSize: Int = 15
     ) async throws -> JAResponse<Self> {
-        guard let taskManager = WebService.shared else {
-            throw MyError.local("WebService is not set")
-        }
+        guard let webService = WebService.shared else { throw MyError.local("WebService is not set") }
 
-        // TODO: pageIndex?
-        var queryItems = [URLQueryItem(name: "page[size]", value: "\(pageSize)")]
+        var queryItems = [URLQueryItem]()
+        if let params = webService.delegate.paginationParams {
+            queryItems.append(
+                URLQueryItem(name: "page[\(params.indexKey)]", value: "\(page)")
+            )
+            queryItems.append(
+                URLQueryItem(name: "page[\(params.sizeKey)]", value: "\(pageSize)")
+            )
+        }
 
         if let sortItems {
             queryItems.append(
@@ -108,9 +117,10 @@ public extension JAGetListProtocol where Self: JADatumProtocol {
             )
         }
 
-        return try await taskManager.decodableTask(
+        return try await webService.decodableTask(
             with: .get(
-                from: .urlFromPath(Self.resourcePath, queryItems: queryItems)
+                from: .urlFromPath(Self.resourcePath, queryItems: queryItems),
+                contentType: .jsonAPI
             )
         )
     }

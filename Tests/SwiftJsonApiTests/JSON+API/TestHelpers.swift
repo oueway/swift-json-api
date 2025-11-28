@@ -12,20 +12,28 @@ import Foundation
 class MockWebServiceDelegate: WebServiceDelegate {
     var apiEndpoint: URL
     var accessToken: String?
-    var isTokenExpired: Bool = false
+    var isTokenExpired: Bool
     var unauthorizedErrorCalled = false
     var forbiddenErrorCalled = false
-    
-    init(apiEndpoint: URL = URL(string: "https://api.example.com")!,
-         accessToken: String? = "test-token") {
+    let paginationParams: PaginationParams?
+    let additionalHeaders: [String: String]?
+    var apiErrorType: any (Decodable & Error).Type
+
+    init(apiEndpoint: URL = URL(string: "https://api.example.com")!, accessToken: String? = "test-token", isTokenExpired: Bool = false, unauthorizedErrorCalled: Bool = false, forbiddenErrorCalled: Bool = false, paginationParams: PaginationParams? = nil, additionalHeaders: [String: String]? = nil, apiErrorType: any (Decodable & Error).Type = JAErrors.self) {
         self.apiEndpoint = apiEndpoint
         self.accessToken = accessToken
+        self.isTokenExpired = isTokenExpired
+        self.unauthorizedErrorCalled = unauthorizedErrorCalled
+        self.forbiddenErrorCalled = forbiddenErrorCalled
+        self.paginationParams = paginationParams
+        self.additionalHeaders = additionalHeaders
+        self.apiErrorType = apiErrorType
     }
-    
+
     func didReceiveUnauthorizedError() {
         unauthorizedErrorCalled = true
     }
-    
+
     func didReceiveForbiddenError() {
         forbiddenErrorCalled = true
     }
@@ -35,40 +43,42 @@ class MockWebServiceDelegate: WebServiceDelegate {
 
 struct MockDatum: JADatumProtocol {
     static let typeName: String = "mock"
-    
+
     let id: String
     let type: String
     let links: JASelfLinks
     let attributes: Attributes
     let relationships: Relationships?
-    
+
     struct Attributes: Codable {
         let name: String
         let value: Int
     }
-    
+
     struct Relationships: Codable {
         let related: JARelationship<MockDatum>?
     }
-    
-    init(id: String = "1", 
+
+    init(id: String = "1",
          links: JASelfLinks = JASelfLinks(linksSelf: "https://api.example.com/mock/1"),
          attributes: Attributes = Attributes(name: "test", value: 100),
-         relationships: Relationships? = nil) {
+         relationships: Relationships? = nil)
+    {
         self.id = id
         self.type = Self.typeName
         self.links = links
         self.attributes = attributes
         self.relationships = relationships
     }
-    
+
     func resolveRelationships(fromIncludes includes: [String: [JAAnyDatum]]) -> MockDatum {
         guard let relationships = relationships,
               let relatedRelationship = relationships.related,
-              let resolved = relatedRelationship.resolved(fromIncludes: includes) else {
+              let resolved = relatedRelationship.resolved(fromIncludes: includes)
+        else {
             return self
         }
-        
+
         let newRelationships = Relationships(related: resolved)
         return MockDatum(
             id: id,
@@ -85,7 +95,8 @@ extension JAResponse {
     static func createMockResponse(data: [Datum] = [],
                                    included: [JADynamicDatum]? = nil,
                                    links: Links? = nil,
-                                   meta: Meta? = nil) -> JAResponse<Datum> {
+                                   meta: Meta? = nil) -> JAResponse<Datum>
+    {
         JAResponse(data: data, included: included, links: links, meta: meta)
     }
 }
@@ -96,7 +107,8 @@ extension JAResponse.Links {
                            first: String? = nil,
                            last: String? = nil,
                            next: String? = nil,
-                           prev: String? = nil) -> JAResponse.Links {
+                           prev: String? = nil) -> JAResponse.Links
+    {
         JAResponse.Links(
             linksSelf: linksSelf,
             related: related,
@@ -110,7 +122,7 @@ extension JAResponse.Links {
 
 // MARK: - JSON Test Data
 
-struct JSONTestData {
+enum JSONTestData {
     static let singleDatumJSON = """
     {
         "id": "1",
@@ -124,7 +136,7 @@ struct JSONTestData {
         }
     }
     """
-    
+
     static let multipleDataJSON = """
     [
         {
@@ -151,7 +163,7 @@ struct JSONTestData {
         }
     ]
     """
-    
+
     static let responseWithDataJSON = """
     {
         "data": {
@@ -176,7 +188,7 @@ struct JSONTestData {
         }
     }
     """
-    
+
     static let responseWithArrayJSON = """
     {
         "data": [
@@ -195,4 +207,3 @@ struct JSONTestData {
     }
     """
 }
-

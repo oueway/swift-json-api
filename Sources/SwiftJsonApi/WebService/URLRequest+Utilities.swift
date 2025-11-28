@@ -91,24 +91,31 @@ extension URLRequest {
 
     // MARK: Lifecycle
 
-    private init(wsUrl url: URL, timeoutInterval: TimeInterval = 10, authorization: String? = nil) {
+    // TODO: customize timeoutInterval on requests
+    private init(wsUrl url: URL, contentType: ContentType = .json, timeoutInterval: TimeInterval = 10) {
         self.init(url: url, cachePolicy: .reloadIgnoringLocalAndRemoteCacheData, timeoutInterval: timeoutInterval)
-        // TODO: extract defaultBearerToken
-        setValue(authorization ?? "Bearer " + (WebService.shared?.delegate.accessToken ?? ""), forHTTPHeaderField: "Authorization")
-        setValue(ContentType.json.rawValue, forHTTPHeaderField: "Accept")
+        let delegate = WebService.shared?.delegate
+        if let token = delegate?.accessToken, !token.isEmpty {
+            setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
+        setValue(contentType.rawValue, forHTTPHeaderField: "Accept")
         setValue("gzip, deflate, br", forHTTPHeaderField: "Accept-Encoding")
         setValue("no-cache", forHTTPHeaderField: "Cache-Control")
-        // TODO: override with custom headers
+
+        // override with customized headers
+        for (key, value) in delegate?.additionalHeaders ?? [:] {
+            setValue(value, forHTTPHeaderField: key)
+        }
     }
 
-    static func get(from url: URL) -> URLRequest {
-        var request = URLRequest(wsUrl: url)
+    static func get(from url: URL, contentType: ContentType = .json) -> URLRequest {
+        var request = URLRequest(wsUrl: url, contentType: contentType)
         request.httpMethod = "GET"
         return request
     }
 
-    static func post(to url: URL, data: Data, contentType: ContentType = .json, authorization: String? = nil) -> URLRequest {
-        var request = URLRequest(wsUrl: url, authorization: authorization)
+    static func post(to url: URL, data: Data, contentType: ContentType = .json) -> URLRequest {
+        var request = URLRequest(wsUrl: url, contentType: contentType)
         request.httpMethod = "POST"
         request.setValue(contentType.rawValue, forHTTPHeaderField: "Content-Type")
         request.httpBody = data
@@ -116,7 +123,7 @@ extension URLRequest {
     }
 
     static func put(to url: URL, data: Data, contentType: ContentType = .json) -> URLRequest {
-        var request = URLRequest(wsUrl: url)
+        var request = URLRequest(wsUrl: url, contentType: contentType)
         request.httpMethod = "PUT"
         request.setValue(contentType.rawValue, forHTTPHeaderField: "Content-Type")
         request.httpBody = data
@@ -130,15 +137,15 @@ extension URLRequest {
     }
 
     func debugLog() {
-        MyLogger.jsonApi?.debugAsync {
+        MyLogger.jsonApi?.logAsync {
             var messages = [String]()
             if let httpMethod { messages.append(httpMethod) }
             if let urlStr = url?.absoluteString { messages.append(urlStr) }
-            if let allHTTPHeaderFields { messages.append("\(allHTTPHeaderFields)") }
+            if let allHTTPHeaderFields { messages.append("\n\(allHTTPHeaderFields)") }
             return messages
         }
 
-        MyLogger.jsonApi?.logAsync {
+        MyLogger.jsonApi?.debugAsync {
             guard let data = httpBody, !data.isEmpty,
                   let string = String(data: data, encoding: .utf8)
             else {

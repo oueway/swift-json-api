@@ -107,7 +107,7 @@ do {
     let tasks = response.datums
     tasksResponse = response
     print("Fetched \(tasks.count) tasks")
-} catch let error as JsonApiError {
+} catch let error as MyError {
     print("Request failed: \(error.errorDescription ?? "Unknown")")
 } catch {
     print("Unexpected error: \(error)")
@@ -153,7 +153,7 @@ Task {
 
 ### Error Handling
 
-The library exposes all runtime errors through `JsonApiError`.  
+The library exposes all runtime errors through `MyError`.  
 `MyError` remains only as a deprecated alias.
 
 ### Date Encoding / Decoding

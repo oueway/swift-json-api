@@ -11,6 +11,7 @@ import SwiftUI
 
 // MARK: - JAResourceProtocol Type
 
+// TODO: conform to ResourceProtocol
 /// Protocol for a JSON:API resource type that exposes its REST path and
 /// include-able relationships.
 public protocol JAResourceProtocol {
@@ -31,13 +32,8 @@ public protocol IncludeItemProtocol: StringRawRepresentable {}
 
 /// A placeholder `IncludeItem` implementation used when no includes are needed.
 public struct EmptyIncludeItem: IncludeItemProtocol {
-    public init?(rawValue: String) { 
-        return nil
-    }
-    
-    public var rawValue: String {
-        ""
-    }
+    public init?(rawValue: String) { nil }
+    public var rawValue: String { "" }
 }
 
 // MARK: - get method
@@ -49,18 +45,18 @@ public extension JAResourceProtocol where Self: JADatumProtocol {
     ///   - includeItems: Optional relationships to include.
     /// - Returns: A decoded `JAResponse` containing the requested resource.
     static func get(byID id: String, include includeItems: [IncludeItem]? = nil) async throws -> JAResponse<Self> {
-        guard let taskManager = WebService.shared else {
-            throw MyError.local("WebService is not set")
-        }
-        
+        guard let webService = WebService.shared else { throw MyError.local("WebService is not set") }
+
+        let resourcePath = "\(Self.resourcePath)/\(id)"
         var queryItems: [URLQueryItem]?
         if let includeItems {
             queryItems = [URLQueryItem(name: "include", value: includeItems.queryValue)]
         }
 
-        return try await taskManager.decodableTask(
+        return try await webService.decodableTask(
             with: .get(
-                from: .urlFromPath(Self.resourcePath, queryItems: queryItems)
+                from: .urlFromPath(resourcePath, queryItems: queryItems),
+                contentType: .jsonAPI
             )
         )
     }

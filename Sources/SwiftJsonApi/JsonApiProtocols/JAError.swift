@@ -9,8 +9,12 @@ import Foundation
 
 // MARK: - JAErrors Type
 
-struct JAErrors: Codable {
+struct JAErrors: Codable, Error, LocalizedError {
     let errors: [JAError]
+
+    var errorDescription: String? {
+        errors.map(\.localizedDescription).joined(separator: "\n")
+    }
 }
 
 // MARK: - JAError Type
